@@ -1,21 +1,32 @@
 <script>
-  const code = new URLSearchParams(window.location.search).get('code');
-  if (code) {
-    // 从环境变量或配置中获取 Token（需通过构建工具注入）
-    const DEPLOY_TOKEN = window.CONFIG?.GITHUB_TOKEN; 
+const code = new URLSearchParams(window.location.search).get('code');
+if (code) {
+  // 从环境变量或配置中获取 Token（需通过构建工具注入）
+  const DEPLOY_TOKEN = window.CONFIG?.GITHUB_TOKEN; 
 
-    fetch('https://api.github.com/repos/motojay/ai_study/dispatches', {
-      method: 'POST',
-      headers: {
-        'Authorization': `token ${DEPLOY_TOKEN}`,
-        'Accept': 'application/vnd.github.everest-preview+json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ 
-        event_type: 'feishu_oauth', 
-        client_payload: { code } 
-      })
-    }).then(response => {
-      if (!response.ok) throw new Error('API 返回错误状态');
-      alert('授权成功！Token 将在后台处理。');
-    }).catch(err =>
+  fetch('https://api.github.com/repos/motojay/ai_study/dispatches', {
+    method: 'POST',
+    headers: {
+      'Authorization': `token ${DEPLOY_TOKEN}`,
+      'Accept': 'application/vnd.github.everest-preview+json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ 
+      event_type: 'feishu_oauth', 
+      client_payload: { code } 
+    })
+  }).then(response => {
+    if (!response.ok) throw new Error('API 返回错误状态');
+    alert('授权成功！Token 将在后台处理。');
+    // 跳转到应用主页（根据实际路由调整）
+    window.location.href = '/dashboard'; 
+  }).catch(err => {
+    console.error('授权失败:', err);
+    alert('授权失败，请重试');
+    window.location.href = '/login'; // 返回登录页
+  });
+} else {
+  console.warn('未检测到授权码');
+  window.location.href = '/error?type=missing_code'; // 错误处理
+}
+</script>
