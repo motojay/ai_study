@@ -3,7 +3,7 @@
     fetch('https://api.github.com/repos/motojay/ai_study/dispatches', {
         method: 'POST',
         headers: {
-            'Authorization': 'token 你的GitHub_PAT',
+            'Authorization': secrets.DEPLOY_TOKEN,
             'Accept': 'application/vnd.github.everest-preview+json'
         },
         body: JSON.stringify({ event_type: 'feishu_oauth', client_payload: { code } })
