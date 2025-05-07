@@ -1,50 +1,21 @@
-name: Feishu OAuth Flow
-
-on:
-  repository_dispatch:
-    types: [feishu_oauth]  # 通过GitHub API触发
-  workflow_dispatch:       # 支持手动触发
-
-jobs:
-  process_oauth:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-
-      - name: Install dependencies
-        run: npm install axios
-
-      - name: Get OAuth token
-        id: feishu_token
-        env:
-          FEISHU_APP_ID: ${{ secrets.FEISHU_APP_ID }}
-          FEISHU_APP_SECRET: ${{ secrets.FEISHU_APP_SECRET }}
-          AUTH_CODE: ${{ github.event.client_payload.code }}
-        run: |
-          const axios = require('axios');
-          const response = await axios.post('https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal', {
-            app_id: process.env.FEISHU_APP_ID,
-            app_secret: process.env.FEISHU_APP_SECRET
-          });
-          const { tenant_access_token } = response.data;
-
-          const userRes = await axios.get('https://open.feishu.cn/open-apis/authen/v1/access_token', {
-            headers: { Authorization: `Bearer ${tenant_access_token}` },
-            params: { code: process.env.AUTH_CODE }
-          });
-          console.log(JSON.stringify(userRes.data));
-          fs.writeFileSync('token.json', JSON.stringify(userRes.data));
-
-      - name: Commit token file
-        run: |
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "actions@github.com"
-          git add token.json
-          git commit -m "Update feishu access token" || echo "No changes to commit"
-          git push
+<script>
+  const code = new URLSearchParams(window.location.search).get('code');
+  if (code) {
+    fetch('https://api.github.com/repos/motojay/ai_study/dispatches', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'token ${{ secrets.DEPLOY_TOKEN }}', // 通过GitHub Actions Secrets传递
+        'Accept': 'application/vnd.github.everest-preview+json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ 
+        event_type: 'feishu_oauth', 
+        client_payload: { code } 
+      })
+    }).then(() => {
+      alert('授权成功！请返回飞书查看结果。');
+    }).catch(err => {
+      console.error('授权失败:', err);
+    });
+  }
+</script>
