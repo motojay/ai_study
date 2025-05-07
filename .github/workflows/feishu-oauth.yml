@@ -7,19 +7,29 @@ jobs:
   process:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
       - name: Exchange code for token
         run: |
           CODE=${{ github.event.client_payload.code }}
-          RESPONSE=$(curl -X POST https://open.feishu.cn/open-apis/authen/v1/access_token \
+          RESPONSE=$(curl -s -w "%{http_code}" -X POST https://open.feishu.cn/open-apis/authen/v1/access_token \
             -H "Content-Type: application/json" \
-            -d '{"grant_type":"authorization_code","code":"'$CODE'","app_id":"你的AppID","app_secret":"你的AppSecret"}')
-          echo "TOKEN_RESPONSE=$RESPONSE" >> $GITHUB_ENV
-      
+            -d '{"grant_type":"authorization_code","code":"'$CODE'","app_id":"${{ secrets.APP_ID }}","app_secret":"${{ secrets.APP_SECRET }}"}')
+          HTTP_STATUS=${RESPONSE: -3}
+          BODY=${RESPONSE%???}
+          if [ "$HTTP_STATUS" != "200" ]; then
+            echo "Error: Feishu API returned $HTTP_STATUS"
+            exit 1
+          fi
+          echo "TOKEN_RESPONSE=$BODY" >> $GITHUB_ENV
+
       - name: Save token
+        env:
+          GH_TOKEN: ${{ secrets.PAT }}
         run: |
           echo "${{ env.TOKEN_RESPONSE }}" > token.json
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
           git add token.json
           git commit -m "Update token"
-          git push
+          git push "https://x-access-token:$GH_TOKEN@github.com/${{ github.repository }}.git"
