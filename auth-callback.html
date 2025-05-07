@@ -1,21 +1,11 @@
 <script>
-  const code = new URLSearchParams(window.location.search).get('code');
-  if (code) {
+    const code = new URLSearchParams(window.location.search).get('code');
     fetch('https://api.github.com/repos/motojay/ai_study/dispatches', {
-      method: 'POST',
-      headers: {
-        'Authorization': 'token ${{ secrets.DEPLOY_TOKEN }}', // 通过GitHub Actions Secrets传递
-        'Accept': 'application/vnd.github.everest-preview+json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ 
-        event_type: 'feishu_oauth', 
-        client_payload: { code } 
-      })
-    }).then(() => {
-      alert('授权成功！请返回飞书查看结果。');
-    }).catch(err => {
-      console.error('授权失败:', err);
+        method: 'POST',
+        headers: {
+            'Authorization': 'token 你的GitHub_PAT',
+            'Accept': 'application/vnd.github.everest-preview+json'
+        },
+        body: JSON.stringify({ event_type: 'feishu_oauth', client_payload: { code } })
     });
-  }
 </script>
