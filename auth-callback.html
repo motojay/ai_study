@@ -1,10 +1,13 @@
 <script>
   const code = new URLSearchParams(window.location.search).get('code');
   if (code) {
+    // 从环境变量或配置中获取 Token（需通过构建工具注入）
+    const DEPLOY_TOKEN = window.CONFIG?.GITHUB_TOKEN; 
+
     fetch('https://api.github.com/repos/motojay/ai_study/dispatches', {
       method: 'POST',
       headers: {
-        'Authorization': 'token ${{ secrets.DEPLOY_TOKEN }}', // 通过GitHub Actions Secrets传递
+        'Authorization': `token ${DEPLOY_TOKEN}`,
         'Accept': 'application/vnd.github.everest-preview+json',
         'Content-Type': 'application/json'
       },
@@ -12,10 +15,7 @@
         event_type: 'feishu_oauth', 
         client_payload: { code } 
       })
-    }).then(() => {
-      alert('授权成功！请返回飞书查看结果。');
-    }).catch(err => {
-      console.error('授权失败:', err);
-    });
-  }
-</script>
+    }).then(response => {
+      if (!response.ok) throw new Error('API 返回错误状态');
+      alert('授权成功！Token 将在后台处理。');
+    }).catch(err =>
