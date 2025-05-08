@@ -9,10 +9,18 @@ const app = express();
 // 定义服务器监听的端口号
 const port = 3000;
 
-// 读取 secrets.json 文件
-const secretsPath = path.join(__dirname, '.trae', 'secrets.json');
-const secrets = JSON.parse(fs.readFileSync(secretsPath, 'utf8'));
-const GITHUB_TOKEN = secrets.GITHUB_TOKEN;
+let GITHUB_TOKEN;
+try {
+    // 读取 secrets.json 文件
+    const secretsPath = path.join(__dirname, '.trae', 'secrets.json');
+    const secretsData = fs.readFileSync(secretsPath, 'utf8');
+    const secrets = JSON.parse(secretsData);
+    GITHUB_TOKEN = secrets.GITHUB_TOKEN;
+    console.log('成功读取 GITHUB_TOKEN:', GITHUB_TOKEN);
+} catch (error) {
+    console.error('读取 secrets.json 文件时出错:', error);
+    process.exit(1);
+}
 
 // 处理根路径的 GET 请求
 app.get('/', (req, res) => {
@@ -28,6 +36,7 @@ app.get('/auth-callback', (req, res) => {
     const scriptToInject = `<script>window.GITHUB_TOKEN = "${GITHUB_TOKEN}";</script>`;
     // 将注入脚本插入到 </body> 标签之前
     htmlContent = htmlContent.replace('</body>', `${scriptToInject}</body>`);
+    console.log('注入后的 HTML 内容:', htmlContent);
     // 发送修改后的 HTML 内容作为响应
     res.send(htmlContent);
 });
