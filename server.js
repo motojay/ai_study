@@ -10,35 +10,27 @@ const app = express();
 const port = 3000;
 
 let GITHUB_TOKEN;
-try {
-    // 读取 secrets.json 文件
-    const secretsPath = path.join(__dirname, '.trae', 'secrets.json');
-    const secretsData = fs.readFileSync(secretsPath, 'utf8');
-    const secrets = JSON.parse(secretsData);
-    GITHUB_TOKEN = secrets.GITHUB_TOKEN;
-    console.log('成功读取 GITHUB_TOKEN:', GITHUB_TOKEN);
-} catch (error) {
+fs.readFile(path.join(__dirname, '.trae', 'secrets.json'), 'utf8', (error, secretsData) => {
+  if (error) {
     console.error('读取 secrets.json 文件时出错:', error);
     process.exit(1);
-}
-
-// 处理根路径的 GET 请求
-app.get('/', (req, res) => {
-    // 当访问根路径时，返回一个简单的消息
-    res.send('Hello, World!');
+  }
+  const secrets = JSON.parse(secretsData);
+  GITHUB_TOKEN = secrets.GITHUB_TOKEN;
+  console.log('成功读取 GITHUB_TOKEN:', GITHUB_TOKEN);
 });
 
 // 处理 auth-callback 的 GET 请求
 app.get('/auth-callback', (req, res) => {
-    // 读取 auth-callback.html 文件内容
-    let htmlContent = fs.readFileSync(path.join(__dirname, 'auth-callback.html'), 'utf8');
-    // 在 HTML 中注入 GITHUB_TOKEN
-    const scriptToInject = `<script>window.GITHUB_TOKEN = "${GITHUB_TOKEN}";</script>`;
-    // 将注入脚本插入到 </body> 标签之前
-    htmlContent = htmlContent.replace('</body>', `${scriptToInject}</body>`);
-    console.log('注入后的 HTML 内容:', htmlContent);
-    // 发送修改后的 HTML 内容作为响应
-    res.send(htmlContent);
+  fs.readFile(path.join(__dirname, 'auth-callback.html'), 'utf8', (error, htmlContent) => {
+    if (error) {
+      res.status(500).send('读取文件失败');
+      return;
+    }
+    // 将 GITHUB_TOKEN 注入到 HTML 中
+    const modifiedHtml = htmlContent.replace('<!-- INSERT_GITHUB_TOKEN -->', `<script>window.GITHUB_TOKEN = '${GITHUB_TOKEN}';</script>`);
+    res.send(modifiedHtml);
+  });
 });
 
 // 启动服务器并监听指定端口
