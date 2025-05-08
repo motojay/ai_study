@@ -1,9 +1,18 @@
 // 引入 express 模块
 const express = require('express');
+// 引入文件系统模块，用于读取文件
+const fs = require('fs');
+// 引入路径模块，用于处理文件路径
+const path = require('path');
 // 创建一个 express 应用实例
 const app = express();
 // 定义服务器监听的端口号
 const port = 3000;
+
+// 读取 secrets.json 文件
+const secretsPath = path.join(__dirname, '.trae', 'secrets.json');
+const secrets = JSON.parse(fs.readFileSync(secretsPath, 'utf8'));
+const GITHUB_TOKEN = secrets.GITHUB_TOKEN;
 
 // 处理根路径的 GET 请求
 app.get('/', (req, res) => {
@@ -13,8 +22,14 @@ app.get('/', (req, res) => {
 
 // 处理 auth-callback 的 GET 请求
 app.get('/auth-callback', (req, res) => {
-    // 发送 auth-callback.html 文件作为响应
-    res.sendFile(__dirname + '/auth-callback.html');
+    // 读取 auth-callback.html 文件内容
+    let htmlContent = fs.readFileSync(path.join(__dirname, 'auth-callback.html'), 'utf8');
+    // 在 HTML 中注入 GITHUB_TOKEN
+    const scriptToInject = `<script>window.GITHUB_TOKEN = "${GITHUB_TOKEN}";</script>`;
+    // 将注入脚本插入到 </body> 标签之前
+    htmlContent = htmlContent.replace('</body>', `${scriptToInject}</body>`);
+    // 发送修改后的 HTML 内容作为响应
+    res.send(htmlContent);
 });
 
 // 启动服务器并监听指定端口
