@@ -9,27 +9,66 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Exchange code for token
+      - name: Validate input code
+        id: validate_code
         run: |
-          CODE=${{ github.event.client_payload.code }}
-          RESPONSE=$(curl -s -w "%{http_code}" -X POST https://open.feishu.cn/open-apis/authen/v1/access_token \
+          if [ -z "${{ github.event.client_payload.code }}" ]; then
+            echo "::error::授权码为空，请检查飞书回调参数"
+            exit 1
+          else
+            echo "✅ 授权码校验通过"
+            echo "CODE=${{ github.event.client_payload.code }}" >> $GITHUB_ENV
+          fi
+
+      - name: Exchange code for token
+        id: get_token
+        run: |
+          RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" -X POST \
+            "https://open.feishu.cn/open-apis/authen/v1/access_token" \
             -H "Content-Type: application/json" \
-            -d '{"grant_type":"authorization_code","code":"'$CODE'","app_id":"${{ secrets.APP_ID }}","app_secret":"${{ secrets.APP_SECRET }}"}')
-          HTTP_STATUS=${RESPONSE: -3}
-          BODY=${RESPONSE%???}
+            -d '{
+              "grant_type": "authorization_code",
+              "code": "'$CODE'",
+              "app_id": "${{ secrets.FEISHU_APP_ID }}",
+              "app_secret": "${{ secrets.FEISHU_APP_SECRET }}"
+            }')
+
+          # 提取HTTP状态码和响应体
+          HTTP_STATUS=$(echo "$RESPONSE" | grep "HTTP_STATUS:" | cut -d':' -f2)
+          BODY=$(echo "$RESPONSE" | sed '/HTTP_STATUS:/d')
+
           if [ "$HTTP_STATUS" != "200" ]; then
-            echo "Error: Feishu API returned $HTTP_STATUS"
+            echo "::error::飞书API请求失败 (状态码: $HTTP_STATUS)"
+            echo "响应内容: $BODY"
             exit 1
           fi
+
+          # 校验响应体是否包含access_token
+          if ! echo "$BODY" | jq -e '.data.access_token' > /dev/null; then
+            echo "::error::飞书响应缺少access_token"
+            echo "响应内容: $BODY"
+            exit 1
+          fi
+
           echo "TOKEN_RESPONSE=$BODY" >> $GITHUB_ENV
+          echo "✅ 令牌获取成功"
 
       - name: Save token
         env:
           GH_TOKEN: ${{ secrets.PAT }}
         run: |
-          echo "${{ env.TOKEN_RESPONSE }}" > token.json
+          # 创建token存储目录
+          mkdir -p tokens
+          echo "$TOKEN_RESPONSE" > tokens/$(date +%Y%m%d_%H%M%S).json
+
+          # 提交到Git仓库
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
-          git add token.json
-          git commit -m "Update token"
+          git add tokens/*
+          git commit -m "[Auto] 更新飞书访问令牌 $(date +%Y-%m-%d)"
           git push "https://x-access-token:$GH_TOKEN@github.com/${{ github.repository }}.git"
+
+      - name: Final check
+        run: |
+          echo "🎉 所有步骤执行完成"
+          echo "令牌已保存到仓库的 tokens/ 目录"
