@@ -54,8 +54,9 @@ jobs:
           echo "✅ 令牌获取成功"
 
       - name: Save token
+        # 修改为使用 DEPLOY_TOKEN
         env:
-          GH_TOKEN: ${{ secrets.PAT }}
+          GH_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
         run: |
           # 创建token存储目录
           mkdir -p tokens

@@ -10,6 +10,7 @@ const app = express();
 const port = 3000;
 
 let GITHUB_TOKEN;
+// 读取本地的 secrets.json 文件
 fs.readFile(path.join(__dirname, '.trae', 'secrets.json'), 'utf8', (error, secretsData) => {
   if (error) {
     console.error('读取 secrets.json 文件时出错:', error);
