@@ -2,8 +2,7 @@
 const code = new URLSearchParams(window.location.search).get('code');
 if (code) {
   // 替换为你的实际 PAT（临时方案，长期建议用后端代理）
-  const DEPLOY_TOKEN = "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"; 
-
+const DEPLOY_TOKEN = window.DEPLOY_TOKEN || "临时_PAT"; // 通过部署工具注入
   fetch('https://api.github.com/repos/motojay/ai_study/dispatches', {
     method: 'POST',
     headers: {
