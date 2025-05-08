@@ -1,0 +1,23 @@
+{
+  "name": "ai_study",
+  "version": "1.0.0",
+  "description": "AI时代的学习内容",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/motojay/ai_study.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/motojay/ai_study/issues"
+  },
+  "homepage": "https://github.com/motojay/ai_study#readme",
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
