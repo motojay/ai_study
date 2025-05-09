@@ -1,7 +1,12 @@
-# 从 secrets.json 文件中读取内容并转换为对象
-$secrets = Get-Content -Path "e:\ai_study\ai_study\.trae\secrets.json" | ConvertFrom-Json
-# 从对象中获取 GITHUB_TOKEN
-$GITHUB_TOKEN = $secrets.GITHUB_TOKEN
+# 从环境变量中获取 GITHUB_TOKEN
+$GITHUB_TOKEN = $env:GITHUB_TOKEN
+
+if (-not $GITHUB_TOKEN) {
+    Write-Error "未从环境变量中获取到 GITHUB_TOKEN，请检查配置"
+    exit 1
+} else {
+    Write-Host "成功从环境变量读取 GITHUB_TOKEN: $GITHUB_TOKEN"
+}
 
 # 设置请求头，包含认证信息
 $headers = @{
@@ -17,5 +22,3 @@ Invoke-WebRequest -Uri "https://api.github.com/repos/motojay/ai_study/" -Headers
 
 ### 4. 检查防火墙和代理设置
 防火墙或者代理设置可能会阻止对 `api.github.com` 的访问。你可以暂时关闭防火墙或者检查代理设置是否正确。
-
-修改后的 `e:\ai_study\ai_study\your_script.ps1` 脚本无需改动，其内容如下：
