@@ -6,85 +6,18 @@
     <title>Auth Callback</title>
 </head>
 <body>
-    <!-- INSERT_GITHUB_TOKEN -->
+    <!-- 移除旧的令牌注入标记 -->
     <script>
-// ggit从 URL 查询参数中获取 code 并进行编码
-const code = encodeURIComponent(new URLSearchParams(window.location.search).get('code'));
-// 假设后端通过全局变量将 GITHUB_TOKEN 传递给前端
-const DEPLOY_TOKEN = window.GITHUB_TOKEN; 
-
-// 检查 DEPLOY_TOKEN 是否为 undefined 或 null
-if (typeof DEPLOY_TOKEN === 'undefined' || DEPLOY_TOKEN === null) {
-  console.error('DEPLOY_TOKEN 未正确传递，请检查后端设置。');
-  alert('DEPLOY_TOKEN 未正确传递，请检查后端设置。');
-} else {
-  // 输出 DEPLOY_TOKEN 用于调试
-  console.log('获取到的 DEPLOY_TOKEN:', DEPLOY_TOKEN);
-  
-  // 检查字符串是否包含非 ASCII 字符
-  function hasNonAscii(str) {
-    for (let i = 0; i < str.length; i++) {
-      if (str.charCodeAt(i) > 127) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  // 检查请求头和请求体是否包含非 ASCII 字符
-  function checkRequestValid(headers, body) {
-    for (const key in headers) {
-      if (hasNonAscii(key) || hasNonAscii(headers[key])) {
-        return false;
-      }
-    }
-    if (hasNonAscii(JSON.stringify(body))) {
-      return false;
-    }
-    return true;
-  }
-
-  if (hasNonAscii(DEPLOY_TOKEN)) {
-    console.error('DEPLOY_TOKEN 包含非 ASCII 字符:', DEPLOY_TOKEN);
-    alert('DEPLOY_TOKEN 包含非 ASCII 字符，请检查后端传递的 Token。');
-  } else if (code && DEPLOY_TOKEN) {
-    const headers = {
-      'Authorization': `token ${DEPLOY_TOKEN}`,
-      'Accept': 'application/vnd.github.everest-preview+json',
-      'Content-Type': 'application/json'
-    };
-    const body = { 
-      event_type: 'feishu_oauth', 
-      client_payload: { code } 
-    };
-
-    if (!checkRequestValid(headers, body)) {
-      console.error('请求头或请求体包含非 ASCII 字符，请检查。');
-      alert('请求头或请求体包含非 ASCII 字符，请检查。');
-    } else {
-      try {
-        fetch('https://api.github.com/repos/motojay/ai_study/dispatches', {
-          method: 'POST',
-          headers: headers,
-          body: JSON.stringify(body)
-        }).then(response => {
-          if (!response.ok) throw new Error('API 返回错误状态，状态码: ' + response.status);
-          alert('授权成功！Token 将在后台处理。');
-          window.location.href = 'https://飞书应用主页'; // 跳转到飞书
-        }).catch(err => {
-          console.error('授权失败:', err);
-          alert('授权失败: ' + err.message);
-        });
-      } catch (error) {
-        console.error('Fetch 执行出错:', error);
-        alert('Fetch 执行出错: ' + error.message);
-      }
-    }
-  } else {
-    console.error('未获取到授权码或 Token');
-    alert('未获取到授权码或 Token');
-  }
-}
+        // 从 URL 查询参数中获取授权码
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        if (code) {
+            // 重定向到后端处理
+            window.location.href = `/auth-callback?code=${code}`;
+        } else {
+            console.error('未获取到授权码');
+            alert('未获取到授权码');
+        }
     </script>
 </body>
 </html>
