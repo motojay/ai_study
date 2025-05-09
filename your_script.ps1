@@ -1,16 +1,16 @@
-# 从环境变量中获取 GITHUB_TOKEN
-$GITHUB_TOKEN = $env:GITHUB_TOKEN
+# 从环境变量中获取 DEPLOY_TOKEN
+$DEPLOY_TOKEN = $env:DEPLOY_TOKEN
 
-if (-not $GITHUB_TOKEN) {
-    Write-Error "未从环境变量中获取到 GITHUB_TOKEN，请检查配置"
+if (-not $DEPLOY_TOKEN) {
+    Write-Error "未从环境变量中获取到 DEPLOY_TOKEN，请检查配置"
     exit 1
 } else {
-    Write-Host "成功从环境变量读取 GITHUB_TOKEN: $GITHUB_TOKEN"
+    Write-Host "成功从环境变量读取 DEPLOY_TOKEN: $DEPLOY_TOKEN"
 }
 
 # 设置请求头，包含认证信息
 $headers = @{
-    "Authorization" = "token $GITHUB_TOKEN"
+    "Authorization" = "token $DEPLOY_TOKEN"
 }
 
 # 发送请求到 GitHub API，获取指定仓库的信息

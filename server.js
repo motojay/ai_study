@@ -11,14 +11,14 @@ const app = express();
 // 定义服务器监听的端口号
 const port = 3000;
 
-// 直接从环境变量中获取 GITHUB_TOKEN
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+// 直接从环境变量中获取 DEPLOY_TOKEN
+const DEPLOY_TOKEN = process.env.DEPLOY_TOKEN;
 
-if (!GITHUB_TOKEN) {
-  console.error('未从环境变量中获取到 GITHUB_TOKEN，请检查配置');
+if (!DEPLOY_TOKEN) {
+  console.error('未从环境变量中获取到 DEPLOY_TOKEN，请检查配置');
   process.exit(1);
 } else {
-  console.log('成功从环境变量读取 GITHUB_TOKEN:', GITHUB_TOKEN);
+  console.log('成功从环境变量读取 DEPLOY_TOKEN:', DEPLOY_TOKEN);
 }
 
 // 处理 auth-callback 的 GET 请求
@@ -30,7 +30,7 @@ app.get('/auth-callback', async (req, res) => {
   }
 
   const headers = {
-    'Authorization': `token ${GITHUB_TOKEN}`,
+    'Authorization': `token ${DEPLOY_TOKEN}`,
     'Accept': 'application/vnd.github.everest-preview+json',
     'Content-Type': 'application/json'
   };
