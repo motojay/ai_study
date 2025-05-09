@@ -36,7 +36,7 @@ console.log('成功从环境变量读取 FEISHU_APP_SECRET:', FEISHU_APP_SECRET)
 app.get('/auth-callback', async (req, res) => {
   const code = req.query.code;
   if (!code) {
-    res.status(400).send('未获取到授权码');
+    res.redirect(`https://motojay.github.io/ai_study/auth-result.html?success=false&message=未获取到授权码`);
     return;
   }
 
@@ -91,10 +91,12 @@ app.get('/auth-callback', async (req, res) => {
       throw new Error('GitHub API 返回错误状态，状态码: ' + githubResponse.status);
     }
 
-    res.send(`<script>alert('授权成功！Token 将在后台处理。'); window.location.href = 'https://飞书应用主页';</script>`);
+    // 重定向到新的前端页面并传递授权成功信息
+    res.redirect(`https://motojay.github.io/ai_study/auth-result.html?success=true`);
   } catch (error) {
     console.error('请求出错:', error);
-    res.status(500).send('授权失败: ' + error.message);
+    // 重定向到新的前端页面并传递授权失败信息
+    res.redirect(`https://motojay.github.io/ai_study/auth-result.html?success=false&message=${encodeURIComponent(error.message)}`);
   }
 });
 
