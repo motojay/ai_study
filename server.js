@@ -33,7 +33,7 @@ console.log('成功从环境变量读取 FEISHU_APP_ID:', FEISHU_APP_ID);
 console.log('成功从环境变量读取 FEISHU_APP_SECRET:', FEISHU_APP_SECRET);
 
 // 处理 auth-callback 的 GET 请求
-app.get('/auth-callback', async (req, res) => {
+app.get('/ai_study/auth-callback', async (req, res) => {
   const code = req.query.code;
   if (!code) {
     res.redirect(`https://motojay.github.io/ai_study/auth-result.html?success=false&message=未获取到授权码`);
