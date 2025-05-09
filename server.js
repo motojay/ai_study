@@ -5,7 +5,7 @@ const fs = require('fs');
 // 引入路径模块，用于处理文件路径
 const path = require('path');
 // 引入 node-fetch 模块，用于发起 HTTP 请求
-const fetch = require('node-fetch');
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 // 创建一个 express 应用实例
 const app = express();
 // 定义服务器监听的端口号

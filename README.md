@@ -10,3 +10,10 @@ AI时代的学习内容
 ## 安全注意事项
 - 避免在前端直接暴露敏感令牌，所有与 GitHub API 的交互都在后端完成。
 - 在正式环境中，需要在部署环境里设置 `DEPLOY_TOKEN` 环境变量。
+
+## 本地测试步骤
+### 1. 安装依赖
+在项目根目录（`e:\ai_study\ai_study`）下打开命令提示符或 PowerShell，运行以下命令：
+```bash
+npm install express node-fetch@latest
+```
