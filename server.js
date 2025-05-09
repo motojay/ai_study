@@ -14,12 +14,23 @@ const port = 3000;
 // 直接从环境变量中获取 DEPLOY_TOKEN
 const DEPLOY_TOKEN = process.env.DEPLOY_TOKEN;
 
+// 从环境变量中获取飞书应用的 APP_ID 和 APP_SECRET
+const FEISHU_APP_ID = process.env.FEISHU_APP_ID;
+const FEISHU_APP_SECRET = process.env.FEISHU_APP_SECRET;
+
 if (!DEPLOY_TOKEN) {
   console.error('未从环境变量中获取到 DEPLOY_TOKEN，请检查配置');
   process.exit(1);
-} else {
-  console.log('成功从环境变量读取 DEPLOY_TOKEN:', DEPLOY_TOKEN);
+} 
+
+if (!FEISHU_APP_ID || !FEISHU_APP_SECRET) {
+  console.error('未从环境变量中获取到 FEISHU_APP_ID 或 FEISHU_APP_SECRET，请检查配置');
+  process.exit(1);
 }
+
+console.log('成功从环境变量读取 DEPLOY_TOKEN:', DEPLOY_TOKEN);
+console.log('成功从环境变量读取 FEISHU_APP_ID:', FEISHU_APP_ID);
+console.log('成功从环境变量读取 FEISHU_APP_SECRET:', FEISHU_APP_SECRET);
 
 // 处理 auth-callback 的 GET 请求
 app.get('/auth-callback', async (req, res) => {
@@ -29,30 +40,60 @@ app.get('/auth-callback', async (req, res) => {
     return;
   }
 
-  const headers = {
-    'Authorization': `token ${DEPLOY_TOKEN}`,
-    'Accept': 'application/vnd.github.everest-preview+json',
-    'Content-Type': 'application/json'
-  };
-  const body = { 
-    event_type: 'feishu_oauth', 
-    client_payload: { code } 
-  };
-
   try {
-    const response = await fetch('https://api.github.com/repos/motojay/ai_study/dispatches', {
+    // 第一步：使用授权码获取 user_access_token
+    const feishuHeaders = {
+      'Content-Type': 'application/json'
+    };
+    const feishuBody = {
+      "grant_type": "authorization_code",
+      "code": code
+    };
+
+    const feishuResponse = await fetch('https://open.feishu.cn/open-apis/authen/v1/access_token', {
       method: 'POST',
-      headers: headers,
-      body: JSON.stringify(body)
+      headers: feishuHeaders,
+      body: JSON.stringify(feishuBody),
+      // 设置请求的基本认证信息，使用飞书应用的 APP_ID 和 APP_SECRET
+      auth: `${FEISHU_APP_ID}:${FEISHU_APP_SECRET}`
     });
 
-    if (!response.ok) {
-      throw new Error('API 返回错误状态，状态码: ' + response.status);
+    if (!feishuResponse.ok) {
+      const feishuResponseText = await feishuResponse.text();
+      throw new Error(`飞书 API 请求失败，状态码: ${feishuResponse.status}，响应内容: ${feishuResponseText}`);
+    }
+
+    const feishuData = await feishuResponse.json();
+    const userAccessToken = feishuData.data.access_token;
+    console.log('成功获取 user_access_token:', userAccessToken);
+
+    // 第二步：向 GitHub API 发送请求，触发 feishu_oauth 事件
+    const githubHeaders = {
+      'Authorization': `token ${DEPLOY_TOKEN}`,
+      'Accept': 'application/vnd.github.everest-preview+json',
+      'Content-Type': 'application/json'
+    };
+    const githubBody = { 
+      event_type: 'feishu_oauth', 
+      client_payload: { 
+        code: code,
+        userAccessToken: userAccessToken
+      } 
+    };
+
+    const githubResponse = await fetch('https://api.github.com/repos/motojay/ai_study/dispatches', {
+      method: 'POST',
+      headers: githubHeaders,
+      body: JSON.stringify(githubBody)
+    });
+
+    if (!githubResponse.ok) {
+      throw new Error('GitHub API 返回错误状态，状态码: ' + githubResponse.status);
     }
 
     res.send(`<script>alert('授权成功！Token 将在后台处理。'); window.location.href = 'https://飞书应用主页';</script>`);
   } catch (error) {
-    console.error('请求 GitHub API 出错:', error);
+    console.error('请求出错:', error);
     res.status(500).send('授权失败: ' + error.message);
   }
 });
