@@ -13,7 +13,7 @@
         const code = urlParams.get('code');
         if (code) {
             // 重定向到后端处理
-            window.location.href = `/ai_study/auth-callback?code=${code}`;
+            window.location.href = `/auth-callback?code=${code}`;
         } else {
             console.error('未获取到授权码');
             alert('未获取到授权码');
