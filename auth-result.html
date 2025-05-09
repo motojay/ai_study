@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>授权结果</title>
+</head>
+<body>
+    <div id="result"></div>
+    <script>
+        // 从 URL 参数中获取授权结果
+        const urlParams = new URLSearchParams(window.location.search);
+        const success = urlParams.get('success');
+        const message = urlParams.get('message');
+        const resultDiv = document.getElementById('result');
+
+        if (success === 'true') {
+            resultDiv.textContent = `授权成功！${message || 'Token 将在后台处理。'}`;
+        } else {
+            resultDiv.textContent = `授权失败：${message || '未知错误'}`;
+        }
+    </script>
+</body>
+</html>
