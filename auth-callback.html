@@ -4,34 +4,100 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Auth Callback</title>
+    <style>
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .error-box {
+            background: #ffeeee;
+            border: 1px solid #ffcccc;
+            padding: 15px;
+            margin: 20px;
+            border-radius: 5px;
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
-    <!-- 移除旧的令牌注入标记 -->
+    <div id="app">
+        <div class="loader" id="loader"></div>
+        <div id="error-container" style="display:none;"></div>
+    </div>
+
     <script>
-        // 从 URL 查询参数中获取授权码和 state 参数
-        const urlParams = new URLSearchParams(window.location.search);
-        const code = urlParams.get('code');
-        const state = urlParams.get('state');
+        document.addEventListener('DOMContentLoaded', function() {
+            const loader = document.getElementById('loader');
+            const errorContainer = document.getElementById('error-container');
 
-        // 假设之前在发起授权请求时设置了 state 参数，这里需要验证
-        const expectedState = localStorage.getItem('feishu_auth_state'); // 从本地存储获取预期的 state
-        if (state !== expectedState) {
-            const errorMessage = 'state 参数验证失败，可能存在 CSRF 攻击';
-            console.error(errorMessage);
-            alert(errorMessage);
-            return;
-        }
+            // 安全获取URL参数
+            function getUrlParam(name) {
+                try {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    return urlParams.get(name);
+                } catch (e) {
+                    showError('URL参数解析失败');
+                    return null;
+                }
+            }
 
-        if (code) {
-            // 从配置或 URL 参数中获取后端路径，这里简单示例使用配置
-            const backendPath = '/ai_study/auth-callback'; // 可改为从配置或 URL 参数获取
-            // 重定向到后端处理
-            window.location.href = `${backendPath}?code=${code}`;
-        } else {
-            const errorMessage = '未获取到授权码';
-            console.error(errorMessage);
-            alert(errorMessage);
-        }
+            // 显示错误信息
+            function showError(message) {
+                loader.style.display = 'none';
+                errorContainer.innerHTML = `
+                    <div class="error-box">
+                        <h3>授权处理失败</h3>
+                        <p>${message}</p>
+                        <button onclick="window.location.href='/ai_study'">返回首页</button>
+                    </div>
+                `;
+                errorContainer.style.display = 'block';
+                console.error('Auth Error:', message);
+            }
+
+            // 主处理逻辑
+            function processAuth() {
+                const code = getUrlParam('code');
+                const state = getUrlParam('state');
+
+                // 验证state参数
+                const expectedState = localStorage.getItem('feishu_auth_state');
+                if (!state || state !== expectedState) {
+                    showError('安全验证失败，请重新发起授权请求');
+                    localStorage.removeItem('feishu_auth_state');
+                    return;
+                }
+
+                if (!code) {
+                    showError('未获取到授权码');
+                    return;
+                }
+
+                try {
+                    // 编码参数防止XSS
+                    const encodedCode = encodeURIComponent(code);
+                    const backendPath = '/ai_study/auth-callback';
+                    
+                    // 添加随机参数防止缓存
+                    const timestamp = Date.now();
+                    window.location.href = `${backendPath}?code=${encodedCode}&t=${timestamp}`;
+                } catch (e) {
+                    showError('授权处理异常: ' + e.message);
+                }
+            }
+
+            // 启动处理
+            processAuth();
+        });
     </script>
 </body>
 </html>
