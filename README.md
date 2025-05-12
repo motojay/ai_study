@@ -28,3 +28,21 @@
 ```bash
 npm install express node-fetch@latest
 ```
+
+## 飞书授权流程说明
+
+### 发起授权请求
+在 `index.html` 页面中，点击 “飞书授权登录” 按钮会触发以下操作：
+1. 生成随机的 `state` 参数。
+2. 将 `state` 参数存储到 `localStorage` 中。
+3. 构建包含 `state` 参数的飞书授权请求 URL。
+4. 跳转到飞书授权页面。
+
+### 处理授权回调
+`auth-callback.html` 页面会接收飞书授权回调的参数，验证 `state` 和 `code` 参数：
+- 若 `state` 参数不存在或与 `localStorage` 中存储的 `feishu_auth_state` 不一致，会显示 “安全验证失败，请重新发起授权请求” 的错误信息。
+- 若 `code` 参数不存在，会显示 “未获取到授权码” 的错误信息。
+- 若验证通过，会将 `code` 转发给后端服务。
+
+### 后端处理
+`server.js` 服务会接收前端转发的 `code`，使用该 `code` 调用飞书 API 获取 `user_access_token`，并触发 GitHub API 事件。
