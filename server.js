@@ -32,6 +32,78 @@ console.log('成功从环境变量读取 DEPLOY_TOKEN:', DEPLOY_TOKEN);
 console.log('成功从环境变量读取 FEISHU_APP_ID:', FEISHU_APP_ID);
 console.log('成功从环境变量读取 FEISHU_APP_SECRET:', FEISHU_APP_SECRET);
 
+// 解析 POST 请求的 JSON 数据
+app.use(express.json());
+
+// 处理 auth-callback 的 POST 请求
+app.post('/ai_study/auth-callback', async (req, res) => {
+    const { code } = req.body;
+    if (!code) {
+        res.redirect(`https://motojay.github.io/ai_study/auth-result.html?success=false&message=未获取到授权码`);
+        return;
+    }
+
+    try {
+        // 第一步：使用授权码获取 user_access_token
+        const feishuHeaders = {
+            'Content-Type': 'application/json',
+            // 手动设置 Basic Auth 的 Authorization 头
+            'Authorization': `Basic ${Buffer.from(`${FEISHU_APP_ID}:${FEISHU_APP_SECRET}`).toString('base64')}`
+        };
+        const feishuBody = {
+            "grant_type": "authorization_code",
+            "code": code
+        };
+
+        const feishuResponse = await fetch('https://open.feishu.cn/open-apis/authen/v1/access_token', {
+            method: 'POST',
+            headers: feishuHeaders,
+            body: JSON.stringify(feishuBody)
+            // 移除原有的 auth 参数
+        });
+
+        if (!feishuResponse.ok) {
+            const feishuResponseText = await feishuResponse.text();
+            throw new Error(`飞书 API 请求失败，状态码: ${feishuResponse.status}，响应内容: ${feishuResponseText}`);
+        }
+
+        const feishuData = await feishuResponse.json();
+        const userAccessToken = feishuData.data.access_token;
+        console.log('成功获取 user_access_token:', userAccessToken);
+
+        // 第二步：向 GitHub API 发送请求，触发 feishu_oauth 事件
+        const githubHeaders = {
+            'Authorization': `token ${DEPLOY_TOKEN}`,
+            'Accept': 'application/vnd.github.everest-preview+json',
+            'Content-Type': 'application/json'
+        };
+        const githubBody = { 
+            event_type: 'feishu_oauth', 
+            client_payload: { 
+                code: code,
+                userAccessToken: userAccessToken
+            } 
+        };
+
+        const githubResponse = await fetch('https://api.github.com/repos/motojay/ai_study/dispatches', {
+            method: 'POST',
+            headers: githubHeaders,
+            body: JSON.stringify(githubBody)
+        });
+
+        if (!githubResponse.ok) {
+            throw new Error('GitHub API 返回错误状态，状态码: ' + githubResponse.status);
+        }
+
+        // 返回成功响应给前端
+        res.status(200).json({ success: true });
+    } catch (error) {
+        console.error('请求出错:', error);
+        // 返回错误响应给前端
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
 // 处理 auth-callback 的 GET 请求
 app.get('/ai_study/auth-callback', async (req, res) => {
   const code = req.query.code;

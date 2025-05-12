@@ -46,3 +46,13 @@ npm install express node-fetch@latest
 
 ### 后端处理
 `server.js` 服务会接收前端转发的 `code`，使用该 `code` 调用飞书 API 获取 `user_access_token`，并触发 GitHub API 事件。
+
+## GitHub Pages 静态托管与回调处理说明
+
+GitHub Pages 是静态托管服务，无法执行后端返回的 HTML 脚本。因此，我们需要创建静态前端页面来处理回调结果。在本项目中，`server.js` 负责处理飞书授权回调逻辑，当处理完成后，会将结果通过 URL 参数的形式重定向到 `auth-result.html` 页面。
+
+`auth-result.html` 是一个静态前端页面，它会从 URL 参数中获取 `success` 和 `message`，并根据这些参数显示授权成功或失败的信息。具体来说：
+- 当 `success` 为 `true` 时，显示授权成功信息。
+- 当 `success` 为 `false` 时，显示授权失败信息，并附带具体的错误消息。
+
+这样，通过静态页面 `auth-result.html` 就可以在 GitHub Pages 上正确展示回调结果了。

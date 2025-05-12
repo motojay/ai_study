@@ -65,30 +65,46 @@
             }
 
             // 主处理逻辑
-            function processAuth() {
-    const code = getUrlParam('code');
-    const state = getUrlParam('state');
-    const expectedState = localStorage.getItem('feishu_auth_state');
+            async function processAuth() {
+                const code = getUrlParam('code');
+                const state = getUrlParam('state');
+                const expectedState = localStorage.getItem('feishu_auth_state');
 
-    // 增强验证逻辑
-    if (!state || state !== expectedState) {
-        showError('安全验证失败: State参数无效');
-        localStorage.removeItem('feishu_auth_state');
-        return;
-    }
+                // 增强验证逻辑
+                if (!state || state !== expectedState) {
+                    showError('安全验证失败: State参数无效');
+                    localStorage.removeItem('feishu_auth_state');
+                    return;
+                }
 
-    if (!code) {
-        showError('未获取到授权码');
-        return;
-    }
+                if (!code) {
+                    showError('未获取到授权码');
+                    return;
+                }
 
-    // 安全传递参数（保留原始state）
-    const params = new URLSearchParams({
-        code: encodeURIComponent(code),
-        state: state  // 保持原始state不变
-    });
-    window.location.href = `/ai_study/auth-callback?${params}`;
-}
+                try {
+                    // 发送 POST 请求到后端服务器
+                    const response = await fetch('/ai_study/auth-callback', {
+                        method: 'POST', // 使用 POST 方法发送数据
+                        headers: {
+                            'Content-Type': 'application/json' // 设置请求头，表明发送的是 JSON 数据
+                        },
+                        body: JSON.stringify({ // 将参数转换为 JSON 字符串
+                            code: code,
+                            state: state
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('后端处理授权码失败');
+                    }
+
+                    // 处理后端返回的结果，这里简单假设成功后跳转到首页
+                    window.location.href = '/ai_study/auth-result.html?success=true';
+                } catch (error) {
+                    showError(error.message);
+                }
+            }
 
             // 启动处理
             processAuth();
