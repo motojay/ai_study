@@ -89,7 +89,7 @@
                     
                     // 添加随机参数防止缓存
                     const timestamp = Date.now();
-                    window.location.href = `${backendPath}?code=${encodedCode}&t=${timestamp}`;
+                    window.location.href = `${backendPath}?code=${encodedCode}&state=${timestamp}`;
                 } catch (e) {
                     showError('授权处理异常: ' + e.message);
                 }
