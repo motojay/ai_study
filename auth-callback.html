@@ -66,34 +66,29 @@
 
             // 主处理逻辑
             function processAuth() {
-                const code = getUrlParam('code');
-                const state = getUrlParam('state');
+    const code = getUrlParam('code');
+    const state = getUrlParam('state');
+    const expectedState = localStorage.getItem('feishu_auth_state');
 
-                // 验证state参数
-                const expectedState = localStorage.getItem('feishu_auth_state');
-                if (!state || state !== expectedState) {
-                    showError('安全验证失败，请重新发起授权请求');
-                    localStorage.removeItem('feishu_auth_state');
-                    return;
-                }
+    // 增强验证逻辑
+    if (!state || state !== expectedState) {
+        showError('安全验证失败: State参数无效');
+        localStorage.removeItem('feishu_auth_state');
+        return;
+    }
 
-                if (!code) {
-                    showError('未获取到授权码');
-                    return;
-                }
+    if (!code) {
+        showError('未获取到授权码');
+        return;
+    }
 
-                try {
-                    // 编码参数防止XSS
-                    const encodedCode = encodeURIComponent(code);
-                    const backendPath = '/ai_study/auth-callback';
-                    
-                    // 添加随机参数防止缓存
-                    const timestamp = Date.now();
-                    window.location.href = `${backendPath}?code=${encodedCode}&state=${timestamp}`;
-                } catch (e) {
-                    showError('授权处理异常: ' + e.message);
-                }
-            }
+    // 安全传递参数（保留原始state）
+    const params = new URLSearchParams({
+        code: encodeURIComponent(code),
+        state: state  // 保持原始state不变
+    });
+    window.location.href = `/ai_study/auth-callback?${params}`;
+}
 
             // 启动处理
             processAuth();
