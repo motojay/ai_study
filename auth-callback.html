@@ -84,20 +84,16 @@
                 }
 
                 try {
-                    // 假设这是完整的 API 地址，需根据实际情况修改
-                    const apiUrl = 'https://motojay.github.io/ai_study/auth-callback'; 
-                    // 准备要发送的数据
-                    const formData = new URLSearchParams();
-                    formData.append('code', code);
-                    formData.append('state', state);
+                    // 构建带有参数的 URL
+                    const apiUrl = new URL('https://motojay.github.io/ai_study/auth-callback');
+                    apiUrl.searchParams.append('code', code);
+                    apiUrl.searchParams.append('state', state);
 
-                    // 发送 POST 请求到后端服务器
+                    // 发送 GET 请求到后端服务器
                     const response = await fetch(apiUrl, {
-                        method: 'POST', 
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded' 
-                        },
-                        body: formData 
+                        method: 'GET', 
+                        // 移除 Content-Type 头，因为 GET 请求没有请求体
+                        headers: {} 
                     });
 
                     if (!response.ok) {
