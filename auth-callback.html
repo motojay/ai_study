@@ -114,11 +114,15 @@
                     // 显式处理重定向逻辑
                     // 先将响应内容读取为文本
                     const responseText = await response.text();
-                    const result = JSON.parse(responseText);
-                    if (result.success) {
-                        window.location.href = '/ai_study/auth-result.html?success=true';
-                    } else {
-                        showError(result.message || '授权处理失败');
+                    try {
+                        const result = JSON.parse(responseText);
+                        if (result.success) {
+                            window.location.href = '/ai_study/auth-result.html?success=true';
+                        } else {
+                            showError(result.message || '授权处理失败');
+                        }
+                    } catch (jsonError) {
+                        showError(`解析后端响应失败，非 JSON 响应: ${responseText.substring(0, 100)}...`);
                     }
                 } catch (error) {
                     showError(error.message);
