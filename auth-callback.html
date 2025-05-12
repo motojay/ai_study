@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Permissions-Policy" content="interest-cohort=()">
     <title>Auth Callback</title>
     <style>
         .loader {
@@ -83,16 +84,21 @@
                 }
 
                 try {
+                    // 假设这是完整的 API 地址，需根据实际情况修改
+                    const apiUrl = 'https://motojay.github.io/ai_study/auth-callback'; 
+                    // 准备要发送的数据
+                    const formData = new URLSearchParams();
+                    formData.append('code', code);
+                    formData.append('state', state);
+
                     // 发送 POST 请求到后端服务器
-                    const response = await fetch('/ai_study/auth-callback', {
-                        method: 'POST', // 使用 POST 方法发送数据
+                    const response = await fetch(apiUrl, {
+                        method: 'POST', 
+                        // 改用 application/x-www-form-urlencoded 内容类型
                         headers: {
-                            'Content-Type': 'application/json' // 设置请求头，表明发送的是 JSON 数据
+                            'Content-Type': 'application/x-www-form-urlencoded' 
                         },
-                        body: JSON.stringify({ // 将参数转换为 JSON 字符串
-                            code: code,
-                            state: state
-                        })
+                        body: formData 
                     });
 
                     if (!response.ok) {
@@ -101,8 +107,13 @@
                         throw new Error(`后端处理授权码失败: ${errorData.message || '未知错误'}`);
                     }
 
-                    // 处理后端返回的结果，这里简单假设成功后跳转到首页
-                    window.location.href = '/ai_study/auth-result.html?success=true';
+                    // 显式处理重定向逻辑
+                    const result = await response.json();
+                    if (result.success) {
+                        window.location.href = '/ai_study/auth-result.html?success=true';
+                    } else {
+                        showError(result.message || '授权处理失败');
+                    }
                 } catch (error) {
                     showError(error.message);
                 }
