@@ -106,71 +106,81 @@ app.post('/ai_study/auth-callback', async (req, res) => {
 
 // 处理 auth-callback 的 GET 请求
 app.get('/ai_study/auth-callback', async (req, res) => {
-  const code = req.query.code;
-  if (!code) {
-    res.redirect(`https://motojay.github.io/ai_study/auth-result.html?success=false&message=未获取到授权码`);
-    return;
-  }
-
-  try {
-    // 第一步：使用授权码获取 user_access_token
-    const feishuHeaders = {
-      'Content-Type': 'application/json',
-      // 手动设置 Basic Auth 的 Authorization 头
-      'Authorization': `Basic ${Buffer.from(`${FEISHU_APP_ID}:${FEISHU_APP_SECRET}`).toString('base64')}`
-    };
-    const feishuBody = {
-      "grant_type": "authorization_code",
-      "code": code
-    };
-
-    const feishuResponse = await fetch('https://open.feishu.cn/open-apis/authen/v1/access_token', {
-      method: 'POST',
-      headers: feishuHeaders,
-      body: JSON.stringify(feishuBody)
-      // 移除原有的 auth 参数
-    });
-
-    if (!feishuResponse.ok) {
-      const feishuResponseText = await feishuResponse.text();
-      throw new Error(`飞书 API 请求失败，状态码: ${feishuResponse.status}，响应内容: ${feishuResponseText}`);
+    const code = req.query.code;
+    if (!code) {
+        // 返回错误的 JSON 响应
+        res.status(400).json({ success: false, message: '未获取到授权码' });
+        return;
     }
 
-    const feishuData = await feishuResponse.json();
-    const userAccessToken = feishuData.data.access_token;
-    console.log('成功获取 user_access_token:', userAccessToken);
+    try {
+        // 第一步：使用授权码获取 user_access_token
+        const feishuHeaders = {
+            'Content-Type': 'application/json',
+            // 手动设置 Basic Auth 的 Authorization 头
+            'Authorization': `Basic ${Buffer.from(`${FEISHU_APP_ID}:${FEISHU_APP_SECRET}`).toString('base64')}`
+        };
+        const feishuBody = {
+            "grant_type": "authorization_code",
+            "code": code
+        };
 
-    // 第二步：向 GitHub API 发送请求，触发 feishu_oauth 事件
-    const githubHeaders = {
-      'Authorization': `token ${DEPLOY_TOKEN}`,
-      'Accept': 'application/vnd.github.everest-preview+json',
-      'Content-Type': 'application/json'
-    };
-    const githubBody = { 
-      event_type: 'feishu_oauth', 
-      client_payload: { 
-        code: code,
-        userAccessToken: userAccessToken
-      } 
-    };
+        const feishuResponse = await fetch('https://open.feishu.cn/open-apis/authen/v1/access_token', {
+            method: 'POST',
+            headers: feishuHeaders,
+            body: JSON.stringify(feishuBody)
+            // 移除原有的 auth 参数
+        });
 
-    const githubResponse = await fetch('https://api.github.com/repos/motojay/ai_study/dispatches', {
-      method: 'POST',
-      headers: githubHeaders,
-      body: JSON.stringify(githubBody)
-    });
+        if (!feishuResponse.ok) {
+            const feishuResponseText = await feishuResponse.text();
+            throw new Error(`飞书 API 请求失败，状态码: ${feishuResponse.status}，响应内容: ${feishuResponseText}`);
+        }
 
-    if (!githubResponse.ok) {
-      throw new Error('GitHub API 返回错误状态，状态码: ' + githubResponse.status);
+        const feishuData = await feishuResponse.json();
+        const userAccessToken = feishuData.data.access_token;
+        console.log('成功获取 user_access_token:', userAccessToken);
+
+        // 第二步：向 GitHub API 发送请求，触发 feishu_oauth 事件
+        const githubHeaders = {
+            'Authorization': `token ${DEPLOY_TOKEN}`,
+            'Accept': 'application/vnd.github.everest-preview+json',
+            'Content-Type': 'application/json'
+        };
+        const githubBody = { 
+            event_type: 'feishu_oauth', 
+            client_payload: { 
+                code: code,
+                userAccessToken: userAccessToken
+            } 
+        };
+
+        const githubResponse = await fetch('https://api.github.com/repos/motojay/ai_study/dispatches', {
+            method: 'POST',
+            headers: githubHeaders,
+            body: JSON.stringify(githubBody)
+        });
+
+        if (!githubResponse.ok) {
+            throw new Error('GitHub API 返回错误状态，状态码: ' + githubResponse.status);
+        }
+
+        // 返回成功的 JSON 响应
+        res.status(200).json({ success: true });
+    } catch (error) {
+        console.error('请求出错:', error);
+        // 返回错误的 JSON 响应
+        res.status(500).json({ success: false, message: error.message });
     }
+});
 
-    // 重定向到新的前端页面并传递授权成功信息
-    res.redirect(`https://motojay.github.io/ai_study/auth-result.html?success=true`);
-  } catch (error) {
+// 重定向到新的前端页面并传递授权成功信息
+res.redirect(`https://motojay.github.io/ai_study/auth-result.html?success=true`);
+} catch (error) {
     console.error('请求出错:', error);
     // 重定向到新的前端页面并传递授权失败信息
     res.redirect(`https://motojay.github.io/ai_study/auth-result.html?success=false&message=${encodeURIComponent(error.message)}`);
-  }
+}
 });
 
 // 启动服务器并监听指定端口
