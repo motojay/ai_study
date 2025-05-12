@@ -96,7 +96,9 @@
                     });
 
                     if (!response.ok) {
-                        throw new Error('后端处理授权码失败');
+                        // 尝试获取后端返回的错误信息
+                        const errorData = await response.json();
+                        throw new Error(`后端处理授权码失败: ${errorData.message || '未知错误'}`);
                     }
 
                     // 处理后端返回的结果，这里简单假设成功后跳转到首页
