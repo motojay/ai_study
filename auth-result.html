@@ -3,22 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>授权结果</title>
+    <title>飞书授权结果</title>
+    <style>
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        .success {
+            color: #52c41a;
+            background: #f6ffed;
+            padding: 20px;
+            border-radius: 4px;
+            border: 1px solid #b7eb8f;
+        }
+        .error {
+            color: #f5222d;
+            background: #fff1f0;
+            padding: 20px;
+            border-radius: 4px;
+            border: 1px solid #ffa39e;
+        }
+        button {
+            margin-top: 20px;
+            padding: 8px 16px;
+            background: #1890ff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
-    <div id="result"></div>
-    <script>
-        // 从 URL 参数中获取授权结果
-        const urlParams = new URLSearchParams(window.location.search);
-        const success = urlParams.get('success');
-        const message = urlParams.get('message');
-        const resultDiv = document.getElementById('result');
+    <main id="result-container">
+        <!-- 动态内容将在这里渲染 -->
+    </main>
 
-        if (success === 'true') {
-            resultDiv.textContent = `授权成功！${message || 'Token 将在后台处理。'}`;
-        } else {
-            resultDiv.textContent = `授权失败：${message || '未知错误'}`;
-        }
+    <script>
+        // 安全获取URL参数（防XSS）
+        const getSafeParam = (name) => {
+            const params = new URLSearchParams(window.location.search);
+            const value = params.get(name);
+            return value ? value.replace(/</g, "&lt;").replace(/>/g, "&gt;") : null;
+        };
+
+        // 渲染结果页面
+        const renderResult = (isSuccess, message) => {
+            const container = document.getElementById('result-container');
+            const className = isSuccess ? 'success' : 'error';
+            const title = isSuccess ? '授权成功' : '授权失败';
+            
+            container.innerHTML = `
+                <div class="${className}">
+                    <h2>${title}</h2>
+                    <p>${message}</p>
+                    <button onclick="handleClose()">关闭窗口</button>
+                </div>
+            `;
+        };
+
+        // 关闭窗口处理
+        const handleClose = () => {
+            try {
+                if (window.opener) {
+                    window.close();
+                } else {
+                    window.history.back();
+                }
+            } catch (e) {
+                console.error('关闭窗口失败:', e);
+            }
+        };
+
+        // 主逻辑
+        document.addEventListener('DOMContentLoaded', () => {
+            const success = getSafeParam('success');
+            const message = getSafeParam('message') || 
+                          (success === 'true' ? 'Token 已成功处理' : '请重试或联系管理员');
+            
+            // 验证参数有效性
+            if (success !== 'true' && success !== 'false') {
+                renderResult(false, '无效的授权参数');
+                return;
+            }
+
+            renderResult(success === 'true', message);
+            
+            // 如果是移动端且成功，3秒后自动关闭
+            if (success === 'true' && /Mobile|Android|iOS/i.test(navigator.userAgent)) {
+                setTimeout(handleClose, 3000);
+            }
+        });
     </script>
 </body>
 </html>

@@ -8,15 +8,29 @@
 <body>
     <!-- 移除旧的令牌注入标记 -->
     <script>
-        // 从 URL 查询参数中获取授权码
+        // 从 URL 查询参数中获取授权码和 state 参数
         const urlParams = new URLSearchParams(window.location.search);
         const code = urlParams.get('code');
+        const state = urlParams.get('state');
+
+        // 假设之前在发起授权请求时设置了 state 参数，这里需要验证
+        const expectedState = localStorage.getItem('feishu_auth_state'); // 从本地存储获取预期的 state
+        if (state !== expectedState) {
+            const errorMessage = 'state 参数验证失败，可能存在 CSRF 攻击';
+            console.error(errorMessage);
+            alert(errorMessage);
+            return;
+        }
+
         if (code) {
+            // 从配置或 URL 参数中获取后端路径，这里简单示例使用配置
+            const backendPath = '/ai_study/auth-callback'; // 可改为从配置或 URL 参数获取
             // 重定向到后端处理
-            window.location.href = `/ai_study/auth-callback?code=${code}`;
+            window.location.href = `${backendPath}?code=${code}`;
         } else {
-            console.error('未获取到授权码');
-            alert('未获取到授权码');
+            const errorMessage = '未获取到授权码';
+            console.error(errorMessage);
+            alert(errorMessage);
         }
     </script>
 </body>

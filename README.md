@@ -1,5 +1,16 @@
-# ai_study
-AI时代的学习内容
+# ai_study 项目
+
+## 项目简介
+这是一个 AI 学习相关的项目，涉及飞书 OAuth 授权等功能。
+
+## GitHub Actions 工作流说明
+
+### `feishu-oauth.yml` 工作流
+该工作流位于 `.github/workflows/feishu-oauth.yml`，用于处理飞书 OAuth 授权相关任务。
+
+#### 启用环节
+此工作流会在接收到 `repository_dispatch` 事件，且事件类型为 `feishu_oauth` 时启用。在项目的 `server.js` 文件中，当成功从飞书获取 `user_access_token` 后，会向 GitHub API 发送请求，触发 `feishu_oauth` 事件
+
 
 ## 功能说明
 ### 飞书授权回调

@@ -43,7 +43,9 @@ app.get('/ai_study/auth-callback', async (req, res) => {
   try {
     // 第一步：使用授权码获取 user_access_token
     const feishuHeaders = {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      // 手动设置 Basic Auth 的 Authorization 头
+      'Authorization': `Basic ${Buffer.from(`${FEISHU_APP_ID}:${FEISHU_APP_SECRET}`).toString('base64')}`
     };
     const feishuBody = {
       "grant_type": "authorization_code",
@@ -53,9 +55,8 @@ app.get('/ai_study/auth-callback', async (req, res) => {
     const feishuResponse = await fetch('https://open.feishu.cn/open-apis/authen/v1/access_token', {
       method: 'POST',
       headers: feishuHeaders,
-      body: JSON.stringify(feishuBody),
-      // 设置请求的基本认证信息，使用飞书应用的 APP_ID 和 APP_SECRET
-      auth: `${FEISHU_APP_ID}:${FEISHU_APP_SECRET}`
+      body: JSON.stringify(feishuBody)
+      // 移除原有的 auth 参数
     });
 
     if (!feishuResponse.ok) {
