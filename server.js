@@ -59,7 +59,6 @@ app.post('/ai_study/auth-callback', async (req, res) => {
             method: 'POST',
             headers: feishuHeaders,
             body: JSON.stringify(feishuBody)
-            // 移除原有的 auth 参数
         });
 
         if (!feishuResponse.ok) {
@@ -129,7 +128,6 @@ app.get('/ai_study/auth-callback', async (req, res) => {
             method: 'POST',
             headers: feishuHeaders,
             body: JSON.stringify(feishuBody)
-            // 移除原有的 auth 参数
         });
 
         if (!feishuResponse.ok) {
@@ -172,15 +170,6 @@ app.get('/ai_study/auth-callback', async (req, res) => {
         // 返回错误的 JSON 响应
         res.status(500).json({ success: false, message: error.message });
     }
-});
-
-// 重定向到新的前端页面并传递授权成功信息
-res.redirect(`https://motojay.github.io/ai_study/auth-result.html?success=true`);
-} catch (error) {
-    console.error('请求出错:', error);
-    // 重定向到新的前端页面并传递授权失败信息
-    res.redirect(`https://motojay.github.io/ai_study/auth-result.html?success=false&message=${encodeURIComponent(error.message)}`);
-}
 });
 
 // 启动服务器并监听指定端口
