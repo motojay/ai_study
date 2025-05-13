@@ -20,5 +20,8 @@
   "homepage": "https://github.com/motojay/ai_study#readme",
   "dependencies": {
     "express": "^5.1.0"
+  },
+  "engines": {
+    "node": "^20.0.0"
   }
 }
