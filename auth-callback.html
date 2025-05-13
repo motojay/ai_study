@@ -84,15 +84,16 @@
                 }
 
                 try {
-                    // 构建带有参数的 URL
-                    const apiUrl = new URL('https://motojay.github.io/ai_study/auth-callback');
-                    apiUrl.searchParams.append('code', code);
-                    apiUrl.searchParams.append('state', state);
-
-                    // 发送 GET 请求到后端服务器
-                    const response = await fetch(apiUrl, {
-                        method: 'GET', 
-                        headers: {} 
+                    // 发送 POST 请求到后端服务器
+                    const response = await fetch('https://motojay.github.io/ai_study/auth-callback', {
+                        method: 'POST', 
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            code: code,
+                            state: state
+                        })
                     });
 
                     if (!response.ok) {
@@ -107,16 +108,11 @@
                         throw new Error(errorMessage);
                     }
 
-                    const responseText = await response.text();
-                    try {
-                        const result = JSON.parse(responseText);
-                        if (result.success) {
-                            window.location.href = '/ai_study/auth-result.html?success=true';
-                        } else {
-                            showError(result.message || '授权处理失败');
-                        }
-                    } catch (jsonError) {
-                        showError(`解析后端响应失败，非 JSON 响应: ${responseText}`);
+                    const result = await response.json();
+                    if (result.success) {
+                        window.location.href = '/ai_study/auth-result.html?success=true';
+                    } else {
+                        showError(result.message || '授权处理失败');
                     }
                 } catch (error) {
                     showError(error.message);
